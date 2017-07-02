@@ -37,3 +37,5 @@ should remain an implementation detail.
 
 Depbleed aims to detect such problems in your libraries, so that they don't
 cause the same problems for your users.
+
+Check out the [examples](examples/) for real-cases that cause problems.
