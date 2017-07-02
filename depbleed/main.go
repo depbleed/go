@@ -3,9 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
-	"go/importer"
 	"os"
 	"path/filepath"
+
+	"golang.org/x/tools/go/loader"
 
 	depbleed "github.com/depbleed/go/go-depbleed"
 	"github.com/spf13/cobra"
@@ -51,14 +52,24 @@ var rootCmd = cobra.Command{
 		}
 
 		for _, packagePath := range packagePaths {
-			pkg, err := importer.Default().Import(packagePath)
+			var config loader.Config
+			config.Import(packagePath)
+			program, err := config.Load()
 
 			if err != nil {
-				return fmt.Errorf("unable to import package \"%s\": %s", packagePath, err)
+				return err
 			}
 
+			info := program.Package(packagePath)
+
 			// TODO: Remove this. For debugging purposes only.
-			fmt.Println(pkg)
+			for name, def := range info.Defs {
+				if def != nil {
+					fmt.Printf("%s: %s\n", name, def.String())
+				} else {
+					fmt.Println("name", name)
+				}
+			}
 		}
 
 		return nil
