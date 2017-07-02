@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"go/importer"
 	"os"
 	"path/filepath"
 
@@ -12,7 +13,7 @@ import (
 
 var rootCmd = cobra.Command{
 	Use:   "depbleed [path]",
-	Short: "Vet a Go package at the specified path for dependency bleeding",
+	Short: "Vet a Go package for dependency bleeding",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) > 1 {
 			return errors.New("too many arguments")
@@ -49,8 +50,16 @@ var rootCmd = cobra.Command{
 			packagePaths = append(packagePaths, packagePath)
 		}
 
-		// TODO: Remove this. For debugging purposes only.
-		fmt.Println(packagePaths)
+		for _, packagePath := range packagePaths {
+			pkg, err := importer.Default().Import(packagePath)
+
+			if err != nil {
+				return fmt.Errorf("unable to import package \"%s\": %s", packagePath, err)
+			}
+
+			// TODO: Remove this. For debugging purposes only.
+			fmt.Println(pkg)
+		}
 
 		return nil
 	},
