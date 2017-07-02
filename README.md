@@ -5,10 +5,10 @@ A Go linter that detects dependency-bleeding in Go packages.
 ## Rationale
 
 Go encourages a vendoring model for dependencies where projects have to copy -
-or fetch upon build - their dependencies and put them in a `vendor` folders. In
+or fetch upon build - their dependencies and put them in a `vendor` folder. In
 Go, packages are uniquely named according to their relative path to the
 `GOPATH`. This causes situations where two libraries that use types from the
-same dependency but in different `vendor` folder have identical yet
+same dependency but in different `vendor` folders have identical yet
 incompatible definitions for those types.
 
 Consider the following layout in your library:
