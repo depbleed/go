@@ -35,7 +35,10 @@ in the fact that both `lib-a` and `lib-b` **bleed** a type from their
 dependencies instead of providing an abstraction. Ideally, their dependencies
 should remain an implementation detail.
 
-Depbleed aims to detect such problems in your libraries, so that they don't
-cause the same problems for your users.
+The only exception, of course, is for standard types and libraries, which are
+by definition the same for all libraries in your ecosystem.
 
-Check out the [examples](examples/) for real-cases that cause problems.
+Depbleed aims to detect dependency bleeding in your libraries, so that they
+don't cause the same problems for your users.
+
+Check out the [examples](examples/) for real-cases of dependency bleeding.
