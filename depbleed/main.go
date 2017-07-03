@@ -14,7 +14,7 @@ import (
 
 var rootCmd = cobra.Command{
 	Use:   "depbleed [path]",
-	Short: "Vet a Go package for dependency bleeding",
+	Short: "A Go package for dependency bleeding",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) > 1 {
 			return errors.New("too many arguments")
@@ -41,15 +41,13 @@ var rootCmd = cobra.Command{
 		// not just a single one.
 		var packagePaths []string
 
-		{
-			packagePath, err := depbleed.GetPackagePath(gopath, absPath)
+		packagePath, err := depbleed.GetPackagePath(gopath, absPath)
 
-			if err != nil {
-				return fmt.Errorf("could not get package path: %s", err)
-			}
-
-			packagePaths = append(packagePaths, packagePath)
+		if err != nil {
+			return fmt.Errorf("could not get package path: %s", err)
 		}
+
+		packagePaths = append(packagePaths, packagePath)
 
 		for _, packagePath := range packagePaths {
 			var config loader.Config
