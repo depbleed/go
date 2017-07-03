@@ -43,3 +43,21 @@ func isSamePackage(rootPackage string, class string) bool {
 
 	return false
 }
+
+func isNativeGo(class string) bool {
+
+	//string, int and other base type do not
+	//belong to a give package
+	if !strings.Contains(class, "/") {
+		return true
+	}
+
+	for _, goPackage := range goPackages {
+
+		if strings.HasPrefix(class, goPackage) {
+			return true
+		}
+	}
+
+	return false
+}

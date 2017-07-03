@@ -121,3 +121,36 @@ func TestIsSamePackage(t *testing.T) {
 		})
 	}
 }
+
+func TestIsNativeGo(t *testing.T) {
+
+	testCases := []struct {
+		Class    string
+		Expected bool
+	}{
+		{
+			Class:    "string",
+			Expected: true,
+		},
+		{
+			Class:    "net/http.Client",
+			Expected: true,
+		},
+		{
+			Class:    "github.com/depbleed/go/examples/exstruct.MyType",
+			Expected: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(fmt.Sprintf("%s", testCase.Class), func(t *testing.T) {
+
+			value := isNativeGo(testCase.Class)
+
+			if value != testCase.Expected {
+				t.Errorf("expected \"%t\" but got \"%t\"", testCase.Expected, value)
+			}
+
+		})
+	}
+}
