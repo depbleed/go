@@ -154,3 +154,45 @@ func TestIsNativeGo(t *testing.T) {
 		})
 	}
 }
+
+func TestIsLeaking(t *testing.T) {
+
+	testCases := []struct {
+		Root     string
+		Class    string
+		Expected bool
+	}{
+		{
+			Root:     "github.com/depbleed/go/examples/exstruct",
+			Class:    "string",
+			Expected: false,
+		},
+		{
+			Root:     "github.com/depbleed/go/examples/exstruct",
+			Class:    "net/http.Client",
+			Expected: false,
+		},
+		{
+			Root:     "github.com/depbleed/go/examples/exstruct",
+			Class:    "github.com/depbleed/go/examples/exstruct.MyType",
+			Expected: false,
+		},
+		{
+			Root:     "github.com/depbleed/go/examples/exstruct",
+			Class:    "github.com/depbleed/go/examples/exstruct/vendor/a.Type",
+			Expected: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(fmt.Sprintf("%s", testCase.Class), func(t *testing.T) {
+
+			value := IsLeaking(testCase.Root, testCase.Class)
+
+			if value != testCase.Expected {
+				t.Errorf("expected \"%t\" but got \"%t\"", testCase.Expected, value)
+			}
+
+		})
+	}
+}
