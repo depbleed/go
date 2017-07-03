@@ -50,6 +50,9 @@ var rootCmd = cobra.Command{
 		packagePaths = append(packagePaths, packagePath)
 
 		for _, packagePath := range packagePaths {
+			// TODO: Remove this. For debugging purposes only.
+			fmt.Println("Exploring", packagePath)
+
 			var config loader.Config
 			config.Import(packagePath)
 			program, err := config.Load()
@@ -62,10 +65,10 @@ var rootCmd = cobra.Command{
 
 			// TODO: Remove this. For debugging purposes only.
 			for name, def := range info.Defs {
-				if def != nil {
-					fmt.Printf("%s: %s\n", name, def.String())
-				} else {
-					fmt.Println("name", name)
+
+				if def != nil && depbleed.IsLeaking(packagePath, def.Type().String()) {
+					//This should print the file and line number too
+					fmt.Printf("%s: %s is leaking \n", name, def.String())
 				}
 			}
 		}
