@@ -12,7 +12,7 @@ $(".pkg-name").each(function(index) {
         currentPackage = $(this).text().trim();
         console.log("	\"" + currentPackage + ",\"")
     } else {
-        console.log("	\"" + currentPackage + "/" + $(this).text().trim() + ",\"")
+        console.log("	\"" + currentPackage + "/" + $(this).text().trim() + "\",")
     }
 });
 console.log("}");
