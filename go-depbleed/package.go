@@ -27,7 +27,7 @@ func GetPackagePath(gopath string, p string) (string, error) {
 	return filepath.ToSlash(packagePath), nil
 }
 
-//IsLeaking returns if `class`` is being leaked by `rootPackage`
+//IsLeaking returns if `class` is being leaked by `rootPackage`
 func IsLeaking(rootPackage string, class string) bool {
 
 	return isVendor(rootPackage, class) && !isSamePackage(rootPackage, class) && !isNativeGo(class)
