@@ -35,3 +35,11 @@ func isVendor(rootPackage string, class string) bool {
 
 	return false
 }
+
+func isSamePackage(rootPackage string, class string) bool {
+	if strings.HasPrefix(class, rootPackage) && !strings.Contains(class, "/vendor/") {
+		return true
+	}
+
+	return false
+}

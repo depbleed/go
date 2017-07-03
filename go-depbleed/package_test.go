@@ -89,3 +89,35 @@ func TestIsVendor(t *testing.T) {
 		})
 	}
 }
+
+func TestIsSamePackage(t *testing.T) {
+
+	testCases := []struct {
+		Root     string
+		Class    string
+		Expected bool
+	}{
+		{
+			Root:     "github.com/depbleed/go/examples/exstruct",
+			Class:    "github.com/depbleed/go/examples/exstruct/vendor/a.Type",
+			Expected: false,
+		},
+		{
+			Root:     "github.com/depbleed/go/examples/exstruct",
+			Class:    "github.com/depbleed/go/examples/exstruct.MyOtherType",
+			Expected: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(fmt.Sprintf("%s-%s", testCase.Root, testCase.Class), func(t *testing.T) {
+
+			value := isSamePackage(testCase.Root, testCase.Class)
+
+			if value != testCase.Expected {
+				t.Errorf("expected \"%t\" but got \"%t\"", testCase.Expected, value)
+			}
+
+		})
+	}
+}
