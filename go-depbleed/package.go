@@ -26,3 +26,12 @@ func GetPackagePath(gopath string, p string) (string, error) {
 
 	return filepath.ToSlash(packagePath), nil
 }
+
+func isVendor(rootPackage string, class string) bool {
+
+	if strings.HasPrefix(class, rootPackage) && strings.Contains(class, "/vendor/") {
+		return true
+	}
+
+	return false
+}
