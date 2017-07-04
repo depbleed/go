@@ -6,7 +6,6 @@ go:
 script: 
   - go get -t -v ./...
   - make build
-  - make test
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
