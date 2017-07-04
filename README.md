@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/depbleed/go.png)](https://travis-ci.org/depbleed/go)
+[![GoDoc](https://godoc.org/github.com/depbleed/go?status.png)](https://godoc.org/github.com/depbleed/go)
+[![codecov](https://codecov.io/gh/depbleed/go/branch/master/graph/badge.svg)](https://codecov.io/gh/depbleed/go)
+
 # Depbleed
 
 A Go linter that detects dependency-bleeding in Go packages.
