@@ -7,7 +7,6 @@ go:
 
 script: 
   - go get -u github.com/golang/dep/cmd/dep
-  - dep init
   - dep ensure -update
   - make build
 
