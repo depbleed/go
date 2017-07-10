@@ -64,11 +64,12 @@ var rootCmd = cobra.Command{
 			info := program.Package(packagePath)
 
 			// TODO: Remove this. For debugging purposes only.
-			for name, def := range info.Defs {
+			for _, def := range info.Defs {
 
 				if def != nil && depbleed.IsLeaking(packagePath, def.Type().String()) {
-					//This should print the file and line number too
-					fmt.Printf("%s: %s is leaking \n", name, def.String())
+
+					pos := program.Fset.Position(def.Pos())
+					fmt.Printf("File %s is leaking type %s at line %d\n", pos.Filename, def.Type().String(), pos.Line)
 				}
 			}
 		}
