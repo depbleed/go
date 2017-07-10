@@ -3,6 +3,7 @@ package depbleed
 import (
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -25,6 +26,19 @@ func GetPackagePath(gopath string, p string) (string, error) {
 	}
 
 	return filepath.ToSlash(packagePath), nil
+}
+
+// IsStandardPackage checks whether a given package is standard.
+//
+// Standard packages are provided with Go.
+func IsStandardPackage(p string) bool {
+	index := sort.SearchStrings(standardGoPackages, p)
+
+	if index < len(standardGoPackages) {
+		return standardGoPackages[index] == p
+	}
+
+	return false
 }
 
 //IsLeaking returns if `class` is being leaked by `rootPackage`
@@ -51,7 +65,6 @@ func isSamePackage(rootPackage string, class string) bool {
 }
 
 func isNativeGo(class string) bool {
-
 	//string, int and other base type do not
 	//belong to a give package
 	if !strings.Contains(class, "/") {

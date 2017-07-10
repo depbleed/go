@@ -58,8 +58,41 @@ func TestGetPackagePath(t *testing.T) {
 	}
 }
 
-func TestIsVendor(t *testing.T) {
+func TestIsStandardPackage(t *testing.T) {
+	testCases := []struct {
+		Package  string
+		Expected bool
+	}{
+		{
+			Package:  "net",
+			Expected: true,
+		},
+		{
+			Package:  "net/http",
+			Expected: true,
+		},
+		{
+			Package:  "foo",
+			Expected: false,
+		},
+		{
+			Package:  "zzzzz",
+			Expected: false,
+		},
+	}
 
+	for _, testCase := range testCases {
+		t.Run(testCase.Package, func(t *testing.T) {
+			result := IsStandardPackage(testCase.Package)
+
+			if result != testCase.Expected {
+				t.Errorf("expected %t but got %t", testCase.Expected, result)
+			}
+		})
+	}
+}
+
+func TestIsVendor(t *testing.T) {
 	testCases := []struct {
 		Root     string
 		Class    string
