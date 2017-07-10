@@ -58,7 +58,7 @@ func isNativeGo(class string) bool {
 		return true
 	}
 
-	for _, goPackage := range goPackages {
+	for _, goPackage := range standardGoPackages {
 
 		if strings.HasPrefix(class, goPackage) {
 			return true
