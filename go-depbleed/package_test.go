@@ -92,33 +92,33 @@ func TestIsStandardPackage(t *testing.T) {
 	}
 }
 
-func TestIsVendor(t *testing.T) {
+func TestIsVendorPackage(t *testing.T) {
+	rootPackage := "github.com/depbleed/go/examples/exstruct"
 	testCases := []struct {
-		Root     string
-		Class    string
+		Package  string
 		Expected bool
 	}{
 		{
-			Root:     "github.com/depbleed/go/examples/exstruct",
-			Class:    "github.com/depbleed/go/examples/exstruct/vendor/a.Type",
+			Package:  "github.com/depbleed/go/examples/exstruct/vendor/foo/bar",
 			Expected: true,
 		},
 		{
-			Root:     "github.com/depbleed/go/examples/exstruct",
-			Class:    "github.com/depbleed/go/examples/exstruct.MyOtherType",
+			Package:  "github.com/depbleed/go/examples/exstruct",
+			Expected: false,
+		},
+		{
+			Package:  "github.com/depbleed/go/examples/exinterface/vendor/foo/bar",
 			Expected: false,
 		},
 	}
 
 	for _, testCase := range testCases {
-		t.Run(fmt.Sprintf("%s-%s", testCase.Root, testCase.Class), func(t *testing.T) {
-
-			value := isVendor(testCase.Root, testCase.Class)
+		t.Run(testCase.Package, func(t *testing.T) {
+			value := IsVendorPackage(testCase.Package, rootPackage)
 
 			if value != testCase.Expected {
-				t.Errorf("expected \"%t\" but got \"%t\"", testCase.Expected, value)
+				t.Errorf("expected %t but got %t", testCase.Expected, value)
 			}
-
 		})
 	}
 }

@@ -41,6 +41,14 @@ func IsStandardPackage(p string) bool {
 	return false
 }
 
+// IsVendorPackage checks whether a given package is a vendor of the specified
+// root package.
+//
+// A vendor is located in a `/vendor/` directory.
+func IsVendorPackage(p string, rootPackage string) bool {
+	return strings.HasPrefix(p, rootPackage) && strings.Contains(p, "/vendor/")
+}
+
 //IsLeaking returns if `class` is being leaked by `rootPackage`
 func IsLeaking(rootPackage string, class string) bool {
 
