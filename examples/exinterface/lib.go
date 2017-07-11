@@ -8,4 +8,6 @@ import (
 type MyInterface interface {
 	// GetA returns one of its dependencies type: this is dependency bleeding.
 	GetA() a.Type
+	// SetA takes one of its dependencies type: this is dependency bleeding.
+	SetA(value a.Type)
 }

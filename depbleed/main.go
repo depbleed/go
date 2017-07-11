@@ -67,13 +67,7 @@ var rootCmd = cobra.Command{
 					relPath = leak.Position.Filename
 				}
 
-				fmt.Fprintf(
-					os.Stderr,
-					"%s:%d:%d: %s is of type %s which is not a local or standard type\n",
-					relPath, leak.Position.Line, leak.Position.Column,
-					leak.Identifier,
-					leak.Object.Type(),
-				)
+				fmt.Fprintf(os.Stderr, "%s:%d:%d: %s\n", relPath, leak.Position.Line, leak.Position.Column, leak)
 			}
 		}
 

@@ -2,11 +2,11 @@ package depbleed
 
 import (
 	"fmt"
-	"go/ast"
 	"go/token"
 	"go/types"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"golang.org/x/tools/go/loader"
@@ -68,21 +68,25 @@ func GetPackageInfo(p string) (PackageInfo, error) {
 
 // Leak represents a leaking type.
 type Leak struct {
-	Identifier *ast.Ident
-	Object     types.Object
-	Position   token.Position
+	Object   types.Object
+	Position token.Position
+	err      error
+}
+
+func (l Leak) Error() string {
+	return fmt.Sprintf("%s %s: %s", GetObjectKind(l.Object), l.Object.Name(), l.err)
 }
 
 // Leaks returns the leaks in the package.
 func (i PackageInfo) Leaks() (result []Leak) {
-	for identifier, obj := range i.Info.Defs {
+	for _, obj := range i.Info.Defs {
 		// Only exported types matter.
 		if obj != nil && obj.Exported() {
-			if i.IsLeaking(obj.Type()) {
+			if err := i.CheckLeaks(obj.Type()); err != nil {
 				result = append(result, Leak{
-					Identifier: identifier,
-					Object:     obj,
-					Position:   i.Fset.Position(obj.Pos()),
+					Object:   obj,
+					Position: i.Fset.Position(obj.Pos()),
+					err:      err,
 				})
 			}
 		}
@@ -91,31 +95,74 @@ func (i PackageInfo) Leaks() (result []Leak) {
 	return
 }
 
-// IsLeaking checks wheter a specified type is being leaked.
-func (i PackageInfo) IsLeaking(t types.Type) bool {
+// CheckLeaks checks wheter a specified type is being leaked.
+func (i PackageInfo) CheckLeaks(t types.Type) error {
+	switch t := t.(type) {
+	case *types.Signature:
+		vars := t.Params()
+
+		nameOrIndex := func(t *types.Tuple, index int) string {
+			name := t.At(index).Name()
+
+			if name == "" {
+				return strconv.Itoa(index)
+			}
+
+			return fmt.Sprintf("\"%s\"", name)
+		}
+
+		for j := 0; j < vars.Len(); j++ {
+			if err := i.CheckLeaks(vars.At(j).Type()); err != nil {
+				return fmt.Errorf("argument %s leaks internal type: %s", nameOrIndex(vars, j), err)
+			}
+		}
+
+		vars = t.Results()
+
+		for j := 0; j < vars.Len(); j++ {
+			if err := i.CheckLeaks(vars.At(j).Type()); err != nil {
+				return fmt.Errorf("result %s leaks internal type: %s", nameOrIndex(vars, j), err)
+			}
+		}
+
+		return nil
+	case *types.Chan:
+		if err := i.CheckLeaks(t.Elem()); err != nil {
+			return fmt.Errorf("channel of internal type: %s", err)
+		}
+
+		return nil
+	case *types.Pointer:
+		if err := i.CheckLeaks(t.Elem()); err != nil {
+			return fmt.Errorf("pointer of internal type: %s", err)
+		}
+
+		return nil
+	}
+
 	pkgPath := GetTypePackagePath(t)
 
 	// Built-in type.
 	if pkgPath == "" {
-		return false
+		return nil
 	}
 
 	// Standard type.
 	if IsStandardPackage(pkgPath) {
-		return false
+		return nil
 	}
 
 	// Subpackages are ok.
 	if IsSubPackage(pkgPath, i.Package.Path()) {
-		return false
+		return nil
 	}
 
 	// Vendors are definitely leaking.
 	if IsVendorPackage(pkgPath, i.Package.Path()) {
-		return true
+		return fmt.Errorf("%s is a vendorized type from %s", GetShortType(t), pkgPath)
 	}
 
-	return false
+	return fmt.Errorf("%s is a non-local type from %s", GetShortType(t), pkgPath)
 }
 
 // GetTypePackagePath returns the package path for a given type.
@@ -129,6 +176,45 @@ func GetTypePackagePath(t types.Type) string {
 	}
 
 	return strings.Join(parts[:len(parts)-1], ".")
+}
+
+// GetShortType returns the short type representation for a given type.
+func GetShortType(t types.Type) string {
+	parts := strings.Split(t.String(), "/")
+
+	return parts[len(parts)-1]
+}
+
+// GetObjectKind returns the kind of an object.
+func GetObjectKind(o types.Object) (kind string) {
+	switch o := o.(type) {
+	case *types.Const:
+		return fmt.Sprintf("%s constant", GetTypeKind(o.Type()))
+	case *types.Var:
+		return fmt.Sprintf("%s variable", GetTypeKind(o.Type()))
+	}
+
+	return GetTypeKind(o.Type())
+}
+
+// GetTypeKind returns the kind of a type.
+func GetTypeKind(t types.Type) (kind string) {
+	switch t := t.(type) {
+	case *types.Named:
+		return fmt.Sprintf("aliased %s", GetTypeKind(t.Underlying()))
+	case *types.Struct:
+		return "struct"
+	case *types.Chan:
+		return "channel type"
+	case *types.Pointer:
+		return "pointer type"
+	case *types.Signature:
+		return "function type"
+	case *types.Basic:
+		return "basic type"
+	}
+
+	return
 }
 
 // IsStandardPackage checks whether a given package is standard.
