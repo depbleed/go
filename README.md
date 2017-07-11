@@ -1,6 +1,7 @@
 [![Build Status](https://travis-ci.org/depbleed/go.png)](https://travis-ci.org/depbleed/go)
 [![GoDoc](https://godoc.org/github.com/depbleed/go?status.png)](https://godoc.org/github.com/depbleed/go)
 [![codecov](https://codecov.io/gh/depbleed/go/branch/master/graph/badge.svg)](https://codecov.io/gh/depbleed/go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/depbleed/go)](https://goreportcard.com/report/github.com/depbleed/go)
 
 # Depbleed
 
