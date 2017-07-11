@@ -6,8 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"golang.org/x/tools/go/loader"
-
 	depbleed "github.com/depbleed/go/go-depbleed"
 	"github.com/spf13/cobra"
 )
@@ -24,6 +22,12 @@ var rootCmd = cobra.Command{
 
 		if len(args) == 1 {
 			path = args[0]
+		}
+
+		wd, err := os.Getwd()
+
+		if err != nil {
+			return fmt.Errorf("failed to get working directory: %s", err)
 		}
 
 		absPath, err := filepath.Abs(path)
@@ -50,27 +54,26 @@ var rootCmd = cobra.Command{
 		packagePaths = append(packagePaths, packagePath)
 
 		for _, packagePath := range packagePaths {
-			// TODO: Remove this. For debugging purposes only.
-			fmt.Println("Exploring", packagePath)
-
-			var config loader.Config
-			config.Import(packagePath)
-			program, err := config.Load()
+			packageInfo, err := depbleed.GetPackageInfo(packagePath)
 
 			if err != nil {
 				return err
 			}
 
-			info := program.Package(packagePath)
+			for _, leak := range packageInfo.Leaks() {
+				relPath, err := filepath.Rel(wd, leak.Position.Filename)
 
-			// TODO: Remove this. For debugging purposes only.
-			for _, def := range info.Defs {
-
-				if def != nil && depbleed.IsLeaking(packagePath, def.Type().String()) {
-
-					pos := program.Fset.Position(def.Pos())
-					fmt.Printf("File %s is leaking type %s at line %d\n", pos.Filename, def.Type().String(), pos.Line)
+				if err != nil {
+					relPath = leak.Position.Filename
 				}
+
+				fmt.Fprintf(
+					os.Stderr,
+					"%s:%d:%d: %s is of type %s which is not a local or standard type\n",
+					relPath, leak.Position.Line, leak.Position.Column,
+					leak.Identifier,
+					leak.Object.Type(),
+				)
 			}
 		}
 

@@ -2,6 +2,8 @@ package depbleed
 
 import (
 	"fmt"
+	"go/token"
+	"go/types"
 	"path/filepath"
 	"testing"
 )
@@ -55,6 +57,50 @@ func TestGetPackagePath(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestGetPackageInfo(t *testing.T) {
+	info, err := GetPackageInfo("github.com/depbleed/go/go-depbleed")
+
+	if err != nil {
+		t.Errorf("expected no error but got: %s", err)
+	}
+
+	expected := "depbleed"
+
+	if info.Package.Name() != expected {
+		t.Errorf("expected \"%s\", got \"%s\"", expected, info.Package.Name())
+	}
+}
+
+func TestGetPackageInfoNonExistingPackage(t *testing.T) {
+	_, err := GetPackageInfo("github.com/depbleed/go/go-depbleed/nonexisting")
+
+	if err == nil {
+		t.Error("expected an error but didn't get one")
+	}
+}
+
+func TestGetTypePackagePathBasicType(t *testing.T) {
+	expected := ""
+	v := &types.Basic{}
+	path := GetTypePackagePath(v)
+
+	if path != expected {
+		t.Errorf("expected \"%s\" got \"%s\"", expected, path)
+	}
+}
+
+func TestGetTypePackagePathNamedType(t *testing.T) {
+	expected := "foo"
+	pkg := types.NewPackage("foo", "foo")
+	typename := types.NewTypeName(token.NoPos, pkg, "bar", types.NewStruct(nil, nil))
+	v := types.NewNamed(typename, &types.Basic{}, nil)
+	path := GetTypePackagePath(v)
+
+	if path != expected {
+		t.Errorf("expected \"%s\" got \"%s\"", expected, path)
 	}
 }
 
@@ -123,109 +169,33 @@ func TestIsVendorPackage(t *testing.T) {
 	}
 }
 
-func TestIsSamePackage(t *testing.T) {
-
+func TestIsSubPackage(t *testing.T) {
+	rootPackage := "github.com/depbleed/go/examples/exstruct"
 	testCases := []struct {
-		Root     string
-		Class    string
+		Package  string
 		Expected bool
 	}{
 		{
-			Root:     "github.com/depbleed/go/examples/exstruct",
-			Class:    "github.com/depbleed/go/examples/exstruct/vendor/a.Type",
+			Package:  "github.com/depbleed/go/examples/exstruct/vendor/",
 			Expected: false,
 		},
 		{
-			Root:     "github.com/depbleed/go/examples/exstruct",
-			Class:    "github.com/depbleed/go/examples/exstruct.MyOtherType",
+			Package:  "github.com/depbleed/go/examples/exstruct",
+			Expected: true,
+		},
+		{
+			Package:  "github.com/depbleed/go/examples/exstruct/sub",
 			Expected: true,
 		},
 	}
 
 	for _, testCase := range testCases {
-		t.Run(fmt.Sprintf("%s-%s", testCase.Root, testCase.Class), func(t *testing.T) {
-
-			value := isSamePackage(testCase.Root, testCase.Class)
-
-			if value != testCase.Expected {
-				t.Errorf("expected \"%t\" but got \"%t\"", testCase.Expected, value)
-			}
-
-		})
-	}
-}
-
-func TestIsNativeGo(t *testing.T) {
-
-	testCases := []struct {
-		Class    string
-		Expected bool
-	}{
-		{
-			Class:    "string",
-			Expected: true,
-		},
-		{
-			Class:    "net/http.Client",
-			Expected: true,
-		},
-		{
-			Class:    "github.com/depbleed/go/examples/exstruct.MyType",
-			Expected: false,
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(fmt.Sprintf("%s", testCase.Class), func(t *testing.T) {
-
-			value := isNativeGo(testCase.Class)
+		t.Run(testCase.Package, func(t *testing.T) {
+			value := IsSubPackage(testCase.Package, rootPackage)
 
 			if value != testCase.Expected {
-				t.Errorf("expected \"%t\" but got \"%t\"", testCase.Expected, value)
+				t.Errorf("expected %t but got %t", testCase.Expected, value)
 			}
-
-		})
-	}
-}
-
-func TestIsLeaking(t *testing.T) {
-
-	testCases := []struct {
-		Root     string
-		Class    string
-		Expected bool
-	}{
-		{
-			Root:     "github.com/depbleed/go/examples/exstruct",
-			Class:    "string",
-			Expected: false,
-		},
-		{
-			Root:     "github.com/depbleed/go/examples/exstruct",
-			Class:    "net/http.Client",
-			Expected: false,
-		},
-		{
-			Root:     "github.com/depbleed/go/examples/exstruct",
-			Class:    "github.com/depbleed/go/examples/exstruct.MyType",
-			Expected: false,
-		},
-		{
-			Root:     "github.com/depbleed/go/examples/exstruct",
-			Class:    "github.com/depbleed/go/examples/exstruct/vendor/a.Type",
-			Expected: true,
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(fmt.Sprintf("%s", testCase.Class), func(t *testing.T) {
-
-			value := IsLeaking(testCase.Root, testCase.Class)
-
-			if value != testCase.Expected {
-				t.Errorf("expected \"%t\" but got \"%t\"", testCase.Expected, value)
-			}
-
 		})
 	}
 }
