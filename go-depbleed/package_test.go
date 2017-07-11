@@ -235,7 +235,11 @@ func TestTypeKind(t *testing.T) {
 		},
 		{
 			Type:     &types.Array{},
-			Expected: "",
+			Expected: "array",
+		},
+		{
+			Type:     &types.Slice{},
+			Expected: "slice",
 		},
 	}
 

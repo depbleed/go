@@ -80,6 +80,7 @@ func (l Leak) Error() string {
 // Leaks returns the leaks in the package.
 func (i PackageInfo) Leaks() (result []Leak) {
 	for _, obj := range i.Info.Defs {
+		fmt.Println("niark", obj)
 		// Only exported types matter.
 		if obj != nil && obj.Exported() {
 			if err := i.CheckLeaks(obj.Type()); err != nil {
@@ -212,6 +213,11 @@ func GetTypeKind(t types.Type) (kind string) {
 		return "function type"
 	case *types.Basic:
 		return "basic type"
+	case *types.Array:
+		return "array"
+	case *types.Slice:
+		return "slice"
+
 	}
 	return ""
 }
