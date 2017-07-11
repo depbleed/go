@@ -66,19 +66,8 @@ func GetPackageInfo(p string) (PackageInfo, error) {
 	}, nil
 }
 
-// Leak represents a leaking type.
-type Leak struct {
-	Object   types.Object
-	Position token.Position
-	err      error
-}
-
-func (l Leak) Error() string {
-	return fmt.Sprintf("%s %s: %s", GetObjectKind(l.Object), l.Object.Name(), l.err)
-}
-
 // Leaks returns the leaks in the package.
-func (i PackageInfo) Leaks() (result []Leak) {
+func (i PackageInfo) Leaks() (result Leaks) {
 	for _, obj := range i.Info.Defs {
 		// Only exported types matter.
 		if obj != nil && obj.Exported() {
@@ -91,6 +80,8 @@ func (i PackageInfo) Leaks() (result []Leak) {
 			}
 		}
 	}
+
+	sort.Sort(result)
 
 	return
 }
