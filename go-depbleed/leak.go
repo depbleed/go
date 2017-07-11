@@ -28,7 +28,7 @@ func (slice Leaks) Less(i, j int) bool {
 			slice[i].Position.Line < slice[j].Position.Line) ||
 		(slice[i].Position.Filename == slice[j].Position.Filename &&
 			slice[i].Position.Line == slice[j].Position.Line &&
-			slice[i].Position.Column == slice[j].Position.Column)
+			slice[i].Position.Column < slice[j].Position.Column)
 }
 
 //Swap swaps two elements
