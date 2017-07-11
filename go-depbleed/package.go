@@ -213,8 +213,7 @@ func GetTypeKind(t types.Type) (kind string) {
 	case *types.Basic:
 		return "basic type"
 	}
-
-	return
+	return ""
 }
 
 // IsStandardPackage checks whether a given package is standard.

@@ -199,3 +199,53 @@ func TestIsSubPackage(t *testing.T) {
 		})
 	}
 }
+
+func TestTypeKind(t *testing.T) {
+
+	// 	expected := ""
+	// v := &types.Basic{}
+	// path := GetTypePackagePath(v)
+	testCases := []struct {
+		Type     types.Type
+		Expected string
+	}{
+		{
+			Type:     &types.Named{},
+			Expected: "aliased ",
+		},
+		{
+			Type:     &types.Struct{},
+			Expected: "struct",
+		},
+		{
+			Type:     &types.Chan{},
+			Expected: "channel type",
+		},
+		{
+			Type:     &types.Pointer{},
+			Expected: "pointer type",
+		},
+		{
+			Type:     &types.Signature{},
+			Expected: "function type",
+		},
+		{
+			Type:     &types.Basic{},
+			Expected: "basic type",
+		},
+		{
+			Type:     &types.Array{},
+			Expected: "",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.Type.String(), func(t *testing.T) {
+			value := GetTypeKind(testCase.Type)
+
+			if value != testCase.Expected {
+				t.Errorf("expected %s but got %s", testCase.Expected, value)
+			}
+		})
+	}
+}
