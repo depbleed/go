@@ -2,6 +2,7 @@ package exstruct
 
 import (
 	"a"
+	"net/http"
 )
 
 //A is an exported standard type
@@ -45,3 +46,6 @@ var M []a.Int
 
 // N has an exported item type.
 var N [3]a.Int
+
+// O exports a standard type
+var O http.Client
