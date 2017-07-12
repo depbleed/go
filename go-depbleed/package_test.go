@@ -201,10 +201,6 @@ func TestIsSubPackage(t *testing.T) {
 }
 
 func TestTypeKind(t *testing.T) {
-
-	// 	expected := ""
-	// v := &types.Basic{}
-	// path := GetTypePackagePath(v)
 	testCases := []struct {
 		Type     types.Type
 		Expected string
@@ -240,6 +236,10 @@ func TestTypeKind(t *testing.T) {
 		{
 			Type:     &types.Slice{},
 			Expected: "slice",
+		},
+		{
+			Type:     &types.Map{},
+			Expected: "map",
 		},
 	}
 

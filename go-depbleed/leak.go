@@ -13,15 +13,15 @@ type Leak struct {
 	err      error
 }
 
-// Leaks represent a slice of Leak
+// Leaks represents a slice of Leak instances.
 type Leaks []Leak
 
-//Len give the length of the leak slice
+// Len gives the length of the leak slice/
 func (slice Leaks) Len() int {
 	return len(slice)
 }
 
-//Less returns if slice[i] should be before slice[j]
+// Less returns if slice[i] should be before slice[j].
 func (slice Leaks) Less(i, j int) bool {
 	return slice[i].Position.Filename < slice[j].Position.Filename ||
 		(slice[i].Position.Filename == slice[j].Position.Filename &&
@@ -31,12 +31,12 @@ func (slice Leaks) Less(i, j int) bool {
 			slice[i].Position.Column < slice[j].Position.Column)
 }
 
-//Swap swaps two elements
+// Swap swaps two elements.
 func (slice Leaks) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
 }
 
-//Error construt an error string
+// Error constructs an error string.
 func (l Leak) Error() string {
 	return fmt.Sprintf("%s %s: %s", GetObjectKind(l.Object), l.Object.Name(), l.err)
 }
