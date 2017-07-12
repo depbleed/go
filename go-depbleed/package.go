@@ -104,7 +104,7 @@ func (i PackageInfo) CheckLeaks(t types.Type) error {
 
 		for j := 0; j < vars.Len(); j++ {
 			if err := i.CheckLeaks(vars.At(j).Type()); err != nil {
-				return fmt.Errorf("argument %s leaks internal type: %s", nameOrIndex(vars, j), err)
+				return fmt.Errorf("function argument %s is an external type: %s", nameOrIndex(vars, j), err)
 			}
 		}
 
@@ -112,20 +112,42 @@ func (i PackageInfo) CheckLeaks(t types.Type) error {
 
 		for j := 0; j < vars.Len(); j++ {
 			if err := i.CheckLeaks(vars.At(j).Type()); err != nil {
-				return fmt.Errorf("result %s leaks internal type: %s", nameOrIndex(vars, j), err)
+				return fmt.Errorf("function result %s is an external type: %s", nameOrIndex(vars, j), err)
 			}
 		}
 
 		return nil
 	case *types.Chan:
 		if err := i.CheckLeaks(t.Elem()); err != nil {
-			return fmt.Errorf("channel of internal type: %s", err)
+			return fmt.Errorf("channel of external type: %s", err)
 		}
 
 		return nil
 	case *types.Pointer:
 		if err := i.CheckLeaks(t.Elem()); err != nil {
-			return fmt.Errorf("pointer of internal type: %s", err)
+			return fmt.Errorf("pointer to external type: %s", err)
+		}
+
+		return nil
+	case *types.Array:
+		if err := i.CheckLeaks(t.Elem()); err != nil {
+			return fmt.Errorf("array item is an external type: %s", err)
+		}
+
+		return nil
+	case *types.Slice:
+		if err := i.CheckLeaks(t.Elem()); err != nil {
+			return fmt.Errorf("slice item is an external type: %s", err)
+		}
+
+		return nil
+	case *types.Map:
+		if err := i.CheckLeaks(t.Key()); err != nil {
+			return fmt.Errorf("map key is an external type: %s", err)
+		}
+
+		if err := i.CheckLeaks(t.Elem()); err != nil {
+			return fmt.Errorf("map value is an external type: %s", err)
 		}
 
 		return nil
@@ -150,10 +172,10 @@ func (i PackageInfo) CheckLeaks(t types.Type) error {
 
 	// Vendors are definitely leaking.
 	if IsVendorPackage(pkgPath, i.Package.Path()) {
-		return fmt.Errorf("%s is a vendorized type from %s", GetShortType(t), pkgPath)
+		return fmt.Errorf("%s is a vendorized type from %s", GetTypeShortName(t), pkgPath)
 	}
 
-	return fmt.Errorf("%s is a non-local type from %s", GetShortType(t), pkgPath)
+	return fmt.Errorf("%s is a global type from %s", GetTypeShortName(t), pkgPath)
 }
 
 // GetTypePackagePath returns the package path for a given type.
@@ -169,48 +191,11 @@ func GetTypePackagePath(t types.Type) string {
 	return strings.Join(parts[:len(parts)-1], ".")
 }
 
-// GetShortType returns the short type representation for a given type.
-func GetShortType(t types.Type) string {
+// GetTypeShortName returns the short type representation for a given type.
+func GetTypeShortName(t types.Type) string {
 	parts := strings.Split(t.String(), "/")
 
 	return parts[len(parts)-1]
-}
-
-// GetObjectKind returns the kind of an object.
-func GetObjectKind(o types.Object) (kind string) {
-	switch o := o.(type) {
-	case *types.Const:
-		return fmt.Sprintf("%s constant", GetTypeKind(o.Type()))
-	case *types.Var:
-		return fmt.Sprintf("%s variable", GetTypeKind(o.Type()))
-	}
-
-	return GetTypeKind(o.Type())
-}
-
-// GetTypeKind returns the kind of a type.
-func GetTypeKind(t types.Type) (kind string) {
-	switch t := t.(type) {
-	case *types.Named:
-		return fmt.Sprintf("aliased %s", GetTypeKind(t.Underlying()))
-	case *types.Struct:
-		return "struct"
-	case *types.Chan:
-		return "channel type"
-	case *types.Pointer:
-		return "pointer type"
-	case *types.Signature:
-		return "function type"
-	case *types.Basic:
-		return "basic type"
-	case *types.Array:
-		return "array"
-	case *types.Slice:
-		return "slice"
-	case *types.Map:
-		return "map"
-	}
-	return ""
 }
 
 // IsStandardPackage checks whether a given package is standard.

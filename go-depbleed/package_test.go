@@ -93,14 +93,26 @@ func TestGetTypePackagePathBasicType(t *testing.T) {
 }
 
 func TestGetTypePackagePathNamedType(t *testing.T) {
-	expected := "foo"
-	pkg := types.NewPackage("foo", "foo")
-	typename := types.NewTypeName(token.NoPos, pkg, "bar", types.NewStruct(nil, nil))
+	expected := "foo/bar"
+	pkg := types.NewPackage("foo/bar", "bar")
+	typename := types.NewTypeName(token.NoPos, pkg, "MyType", types.NewStruct(nil, nil))
 	v := types.NewNamed(typename, &types.Basic{}, nil)
 	path := GetTypePackagePath(v)
 
 	if path != expected {
 		t.Errorf("expected \"%s\" got \"%s\"", expected, path)
+	}
+}
+
+func TestGetTypeShortName(t *testing.T) {
+	expected := "bar.MyType"
+	pkg := types.NewPackage("foo/bar", "bar")
+	typename := types.NewTypeName(token.NoPos, pkg, "MyType", types.NewStruct(nil, nil))
+	v := types.NewNamed(typename, &types.Basic{}, nil)
+	shortName := GetTypeShortName(v)
+
+	if shortName != expected {
+		t.Errorf("expected \"%s\" got \"%s\"", expected, shortName)
 	}
 }
 
@@ -195,60 +207,6 @@ func TestIsSubPackage(t *testing.T) {
 
 			if value != testCase.Expected {
 				t.Errorf("expected %t but got %t", testCase.Expected, value)
-			}
-		})
-	}
-}
-
-func TestTypeKind(t *testing.T) {
-	testCases := []struct {
-		Type     types.Type
-		Expected string
-	}{
-		{
-			Type:     &types.Named{},
-			Expected: "aliased ",
-		},
-		{
-			Type:     &types.Struct{},
-			Expected: "struct",
-		},
-		{
-			Type:     &types.Chan{},
-			Expected: "channel type",
-		},
-		{
-			Type:     &types.Pointer{},
-			Expected: "pointer type",
-		},
-		{
-			Type:     &types.Signature{},
-			Expected: "function type",
-		},
-		{
-			Type:     &types.Basic{},
-			Expected: "basic type",
-		},
-		{
-			Type:     &types.Array{},
-			Expected: "array",
-		},
-		{
-			Type:     &types.Slice{},
-			Expected: "slice",
-		},
-		{
-			Type:     &types.Map{},
-			Expected: "map",
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.Type.String(), func(t *testing.T) {
-			value := GetTypeKind(testCase.Type)
-
-			if value != testCase.Expected {
-				t.Errorf("expected %s but got %s", testCase.Expected, value)
 			}
 		})
 	}

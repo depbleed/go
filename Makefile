@@ -1,7 +1,10 @@
-.PHONY: all build
+.PHONY: all build test
 
-all: build
+all: build test
 
 build:
-	go test -v ./go-depbleed -coverprofile=coverage.txt
 	go build -o bin/depbleed ./depbleed
+
+test:
+	go test ./go-depbleed -coverprofile=coverage.txt
+	go tool cover -func=coverage.txt

@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"go/build"
 	"os"
 	"path/filepath"
 
@@ -36,7 +37,7 @@ var rootCmd = cobra.Command{
 			return fmt.Errorf("could not understand path \"%s\": %s", path, err)
 		}
 
-		gopath := os.Getenv("GOPATH")
+		gopath := build.Default.GOPATH
 
 		cmd.SilenceUsage = true
 

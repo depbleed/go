@@ -10,4 +10,6 @@ type MyInterface interface {
 	GetA() a.Type
 	// SetA takes one of its dependencies type: this is dependency bleeding.
 	SetA(value a.Type)
+	// OK is fine.
+	OK(int) int
 }

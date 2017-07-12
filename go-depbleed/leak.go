@@ -13,6 +13,11 @@ type Leak struct {
 	err      error
 }
 
+// Error constructs an error string.
+func (l Leak) Error() string {
+	return fmt.Sprintf("%s: %s", l.Object.Name(), l.err)
+}
+
 // Leaks represents a slice of Leak instances.
 type Leaks []Leak
 
@@ -34,9 +39,4 @@ func (slice Leaks) Less(i, j int) bool {
 // Swap swaps two elements.
 func (slice Leaks) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
-}
-
-// Error constructs an error string.
-func (l Leak) Error() string {
-	return fmt.Sprintf("%s %s: %s", GetObjectKind(l.Object), l.Object.Name(), l.err)
 }

@@ -1,4 +1,4 @@
-package exstruct
+package expointer
 
 import "a"
 
@@ -6,7 +6,7 @@ import "a"
 type MyType struct {
 	// A is a public member of a slice type provided by a dependency. This is
 	// dependency bleeding.
-	A []a.Type
+	A *a.Type
 	// B is a slice of a standard type. Nothing to see here.
-	B []int
+	B *int
 }

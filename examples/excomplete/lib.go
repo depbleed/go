@@ -21,7 +21,7 @@ type E interface {
 }
 
 //G exports a standard type
-type G interface {
+type G struct {
 	a.Interface
 }
 
@@ -33,3 +33,15 @@ var I *a.Time
 
 //J is an exported standard type
 var J a.Int = 1
+
+// K has an exported map key.
+var K map[a.Int]string
+
+// L has an exported map value.
+var L map[string]a.Int
+
+// M has an exported item type.
+var M []a.Int
+
+// N has an exported item type.
+var N [3]a.Int
