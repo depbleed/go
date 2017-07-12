@@ -61,7 +61,9 @@ var rootCmd = cobra.Command{
 				return err
 			}
 
-			for _, leak := range packageInfo.Leaks() {
+			leaks := packageInfo.Leaks()
+
+			for _, leak := range leaks {
 				relPath, err := filepath.Rel(wd, leak.Position.Filename)
 
 				if err != nil {
@@ -69,6 +71,10 @@ var rootCmd = cobra.Command{
 				}
 
 				fmt.Fprintf(os.Stderr, "%s:%d:%d: %s\n", relPath, leak.Position.Line, leak.Position.Column, leak)
+			}
+
+			if len(leaks) == 0 {
+				fmt.Fprintf(os.Stdout, "No leak detected for package %s\n", packagePath)
 			}
 		}
 
