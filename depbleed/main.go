@@ -11,6 +11,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// LintingError indicates a linting error occured.
+type LintingError struct{}
+
+func (LintingError) Error() string { return "linting error" }
+
+var (
+	noFail bool
+)
+
 var rootCmd = cobra.Command{
 	Use:   "depbleed [path]",
 	Short: "A Go package for dependency bleeding",
@@ -75,15 +84,31 @@ var rootCmd = cobra.Command{
 
 			if len(leaks) == 0 {
 				fmt.Fprintf(os.Stdout, "No leak detected for package %s\n", packagePath)
+			} else {
+				if !noFail {
+					return LintingError{}
+				}
 			}
 		}
 
 		return nil
 	},
+	SilenceErrors: true,
+}
+
+func init() {
+	rootCmd.Flags().BoolVar(&noFail, "no-fail", false, "Don't fail on errors")
 }
 
 func main() {
 	if err := rootCmd.Execute(); err != nil {
-		os.Exit(1)
+		switch err.(type) {
+		case LintingError:
+		default:
+			fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+			os.Exit(1)
+		}
+
+		os.Exit(127)
 	}
 }
