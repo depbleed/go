@@ -66,8 +66,17 @@ func GetPackageInfo(p string) (PackageInfo, error) {
 	}, nil
 }
 
+// IsMain checks whether the package is a main package.
+func (i PackageInfo) IsMain() bool {
+	return i.Package.Name() == "main"
+}
+
 // Leaks returns the leaks in the package.
 func (i PackageInfo) Leaks() (result Leaks) {
+	if i.IsMain() {
+		return
+	}
+
 	for _, obj := range i.Info.Defs {
 		// Only exported types matter.
 		if obj != nil && obj.Exported() {
