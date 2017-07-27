@@ -27,6 +27,10 @@ func isHidden(path string) bool {
 
 func goPackagesWalkFunc(gopath string, packages map[string]bool) filepath.WalkFunc {
 	return func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
 		if info.IsDir() {
 			if isVendor(info.Name()) {
 				return filepath.SkipDir
@@ -79,13 +83,7 @@ func scanGoPackages(gopath string, path string) (result []string, err error) {
 // return a package path for a non-existing package.
 func GetPackagePaths(gopath string, path string) ([]string, error) {
 	if isFilePath(path) {
-		var err error
-		path, err = filepath.Abs(path)
-
-		if err != nil {
-			return nil, fmt.Errorf("could not understand path \"%s\": %s", path, err)
-		}
-
+		path, _ = filepath.Abs(path)
 		packagePath, err := filepath.Rel(filepath.Join(gopath, "src"), path)
 
 		if err != nil {

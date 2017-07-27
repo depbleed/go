@@ -3,6 +3,8 @@ package exstruct
 import (
 	"a"
 	"net/http"
+
+	depbleed "github.com/depbleed/go/go-depbleed"
 )
 
 //A is an exported standard type
@@ -49,3 +51,6 @@ var N [3]a.Int
 
 // O exports a standard type
 var O http.Client
+
+// P exports a global type.
+var P depbleed.Leak

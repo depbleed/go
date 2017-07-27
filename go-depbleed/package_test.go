@@ -10,6 +10,7 @@ import (
 )
 
 func TestGetPackagePaths(t *testing.T) {
+	fixturesGoPath, _ := filepath.Abs("./fixtures/gopath")
 	testCases := []struct {
 		Gopath   string
 		Path     string
@@ -33,6 +34,21 @@ func TestGetPackagePaths(t *testing.T) {
 		{
 			Gopath:   "/tmp2",
 			Path:     "/tmp/src/foo/bar",
+			Expected: nil,
+		},
+		{
+			Gopath:   "/tmp",
+			Path:     "foo",
+			Expected: []string{"foo"},
+		},
+		{
+			Gopath:   fixturesGoPath,
+			Path:     "./fixtures/gopath/src/foo/...",
+			Expected: []string{"foo", "foo/bar"},
+		},
+		{
+			Gopath:   fixturesGoPath,
+			Path:     "./fixtures/gopath/src/foo/unexisting/...",
 			Expected: nil,
 		},
 	}

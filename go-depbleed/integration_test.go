@@ -1,34 +1,48 @@
 package depbleed
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestExamples(t *testing.T) {
 	testCases := []struct {
 		PackagePath string
+		LeaksCount  int
 	}{
 		{
 			PackagePath: "github.com/depbleed/go/examples/exinterface",
+			LeaksCount:  2,
 		},
 		{
 			PackagePath: "github.com/depbleed/go/examples/exstruct",
+			LeaksCount:  1,
 		},
 		{
 			PackagePath: "github.com/depbleed/go/examples/exmap",
+			LeaksCount:  2,
 		},
 		{
 			PackagePath: "github.com/depbleed/go/examples/exslice",
+			LeaksCount:  1,
 		},
 		{
 			PackagePath: "github.com/depbleed/go/examples/exarray",
+			LeaksCount:  1,
 		},
 		{
 			PackagePath: "github.com/depbleed/go/examples/expointer",
+			LeaksCount:  1,
 		},
 		{
 			PackagePath: "github.com/depbleed/go/examples/exchan",
+			LeaksCount:  1,
 		},
 		{
 			PackagePath: "github.com/depbleed/go/examples/excomplete",
+			LeaksCount:  13,
+		},
+		{
+			PackagePath: "github.com/depbleed/go/examples/exmain",
 		},
 	}
 
@@ -42,8 +56,8 @@ func TestExamples(t *testing.T) {
 
 			leaks := packageInfo.Leaks()
 
-			if len(leaks) == 0 {
-				t.Error("expected leaks")
+			if len(leaks) != testCase.LeaksCount {
+				t.Errorf("expected %d leak(s) got %d", testCase.LeaksCount, len(leaks))
 			}
 		})
 	}
