@@ -5,34 +5,35 @@ import (
 	"go/token"
 	"go/types"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
-func TestGetPackagePath(t *testing.T) {
+func TestGetPackagePaths(t *testing.T) {
 	testCases := []struct {
 		Gopath   string
 		Path     string
-		Expected string
+		Expected []string
 	}{
 		{
 			Gopath:   "/tmp",
 			Path:     "/tmp/src/foo/bar",
-			Expected: "foo/bar",
+			Expected: []string{"foo/bar"},
 		},
 		{
 			Gopath:   "./tmp",
 			Path:     "/tmp/foo/bar",
-			Expected: "",
+			Expected: nil,
 		},
 		{
 			Gopath:   "/tmp",
 			Path:     "/tmp/foo/bar",
-			Expected: "",
+			Expected: nil,
 		},
 		{
 			Gopath:   "/tmp2",
 			Path:     "/tmp/src/foo/bar",
-			Expected: "",
+			Expected: nil,
 		},
 	}
 
@@ -41,19 +42,19 @@ func TestGetPackagePath(t *testing.T) {
 			gopath := filepath.FromSlash(testCase.Gopath)
 			path := filepath.FromSlash(testCase.Path)
 
-			value, err := GetPackagePath(gopath, path)
+			values, err := GetPackagePaths(gopath, path)
 
-			if testCase.Expected == "" {
+			if len(testCase.Expected) == 0 {
 				if err == nil {
-					t.Errorf("expected an error but got: %s", value)
+					t.Errorf("expected an error but got: %v", values)
 				}
 			} else {
 				if err != nil {
 					t.Errorf("expected no error but got: %s", err)
 				}
 
-				if value != testCase.Expected {
-					t.Errorf("expected \"%s\" but got \"%s\"", testCase.Expected, value)
+				if !reflect.DeepEqual(values, testCase.Expected) {
+					t.Errorf("expected \"%v\" but got \"%v\"", testCase.Expected, values)
 				}
 			}
 		})

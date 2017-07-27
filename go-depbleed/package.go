@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/token"
 	"go/types"
+	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -12,25 +13,99 @@ import (
 	"golang.org/x/tools/go/loader"
 )
 
-// GetPackagePath returns the package path for the package at the specified
-// location.
-//
-// If the `p` is not in `gopath`, an error is returned.
-//
-// GetPackagePath does not check for the path's existence and will hapilly
-// return a package name for a non-existing package.
-func GetPackagePath(gopath string, path string) (string, error) {
-	packagePath, err := filepath.Rel(filepath.Join(gopath, "src"), path)
+func isFilePath(path string) bool {
+	return filepath.IsAbs(path) || strings.HasPrefix(path, ".")
+}
+
+func isVendor(path string) bool {
+	return path == "vendor"
+}
+
+func isHidden(path string) bool {
+	return strings.HasPrefix(path, ".")
+}
+
+func goPackagesWalkFunc(gopath string, packages map[string]bool) filepath.WalkFunc {
+	return func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			if isVendor(info.Name()) {
+				return filepath.SkipDir
+			}
+
+			if isHidden(info.Name()) {
+				return filepath.SkipDir
+			}
+		} else if filepath.Ext(path) == ".go" {
+			packagePath, _ := filepath.Rel(filepath.Join(gopath, "src"), filepath.Dir(path))
+			packages[packagePath] = true
+		}
+
+		return nil
+	}
+}
+
+func scanGoPackages(gopath string, path string) (result []string, err error) {
+	packages := make(map[string]bool)
+	err = filepath.Walk(path, goPackagesWalkFunc(gopath, packages))
 
 	if err != nil {
-		return "", fmt.Errorf("cannot determine if path \"%s\" is in GOPATH (%s): %s", path, gopath, err)
+		return nil, fmt.Errorf("unable to walk through \"%s\": %s", path, err)
 	}
 
-	if strings.HasPrefix(packagePath, "..") {
-		return "", fmt.Errorf("path \"%s\" is not in GOPATH (%s)", path, gopath)
+	for path := range packages {
+		result = append(result, path)
 	}
 
-	return filepath.ToSlash(packagePath), nil
+	sort.Strings(result)
+
+	return
+}
+
+// GetPackagePaths returns the package paths for the packages matching the
+// specified `path`.
+//
+// If `path` is a Go package path, is it returned as-is. This is a convenience.
+//
+// If `path` is either an absolute file path, or starts with a dot, the
+// specified `gopath` is used to determine the package paths.
+//
+// If the file `path` is not in `gopath` or if it's relative position to the
+// `gopath` can't be determined, an error is returned.
+//
+// If `path` is a filepath and ends with ..., subpackages are also looked for
+// recursively.
+//
+// GetPackagePaths does not check for the package existence and will hapilly
+// return a package path for a non-existing package.
+func GetPackagePaths(gopath string, path string) ([]string, error) {
+	if isFilePath(path) {
+		var err error
+		path, err = filepath.Abs(path)
+
+		if err != nil {
+			return nil, fmt.Errorf("could not understand path \"%s\": %s", path, err)
+		}
+
+		packagePath, err := filepath.Rel(filepath.Join(gopath, "src"), path)
+
+		if err != nil {
+			return nil, fmt.Errorf("cannot determine if path \"%s\" is in GOPATH (%s): %s", path, gopath, err)
+		}
+
+		if strings.HasPrefix(packagePath, "..") {
+			return nil, fmt.Errorf("path \"%s\" is not in GOPATH (%s)", path, gopath)
+		}
+
+		if strings.HasSuffix(packagePath, "...") {
+			dir := filepath.Dir(path)
+
+			return scanGoPackages(gopath, dir)
+		}
+
+		return []string{filepath.ToSlash(packagePath)}, nil
+	}
+
+	return []string{path}, nil
 }
 
 // PackageInfo represents information about a package.

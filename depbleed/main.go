@@ -21,8 +21,8 @@ var (
 )
 
 var rootCmd = cobra.Command{
-	Use:   "depbleed [path]",
-	Short: "A Go package for dependency bleeding",
+	Use:   "depbleed [path/package]",
+	Short: "A Go linter that reports dependency bleeding",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) > 1 {
 			return errors.New("too many arguments")
@@ -40,28 +40,17 @@ var rootCmd = cobra.Command{
 			return fmt.Errorf("failed to get working directory: %s", err)
 		}
 
-		absPath, err := filepath.Abs(path)
-
-		if err != nil {
-			return fmt.Errorf("could not understand path \"%s\": %s", path, err)
-		}
-
 		gopath := build.Default.GOPATH
 
 		cmd.SilenceUsage = true
 
-		// TODO: The current code does not handle the `./...` wildcard form but
-		// it should. Which means we must also handle a list of package paths,
-		// not just a single one.
-		var packagePaths []string
-
-		packagePath, err := depbleed.GetPackagePath(gopath, absPath)
+		packagePaths, err := depbleed.GetPackagePaths(gopath, path)
 
 		if err != nil {
-			return fmt.Errorf("could not get package path: %s", err)
+			return fmt.Errorf("could not get package paths: %s", err)
 		}
 
-		packagePaths = append(packagePaths, packagePath)
+		failed := false
 
 		for _, packagePath := range packagePaths {
 			packageInfo, err := depbleed.GetPackageInfo(packagePath)
@@ -82,13 +71,13 @@ var rootCmd = cobra.Command{
 				fmt.Fprintf(os.Stderr, "%s:%d:%d: %s\n", relPath, leak.Position.Line, leak.Position.Column, leak)
 			}
 
-			if len(leaks) == 0 {
-				fmt.Fprintf(os.Stdout, "No leak detected for package %s\n", packagePath)
-			} else {
-				if !noFail {
-					return LintingError{}
-				}
+			if len(leaks) != 0 {
+				failed = true
 			}
+		}
+
+		if !noFail && failed {
+			return LintingError{}
 		}
 
 		return nil
