@@ -44,6 +44,18 @@ var rootCmd = cobra.Command{
 
 		cmd.SilenceUsage = true
 
+		var filenamePath string
+
+		if info, _ := os.Stat(path); !info.IsDir() {
+			filenamePath, _ = filepath.Abs(path)
+
+			if !filepath.IsAbs(path) {
+				path = "./" + filepath.Dir(path)
+			} else {
+				path = filepath.Dir(path)
+			}
+		}
+
 		packagePaths, err := depbleed.GetPackagePaths(gopath, path)
 
 		if err != nil {
@@ -62,6 +74,10 @@ var rootCmd = cobra.Command{
 			leaks := packageInfo.Leaks()
 
 			for _, leak := range leaks {
+				if filenamePath != "" && filenamePath != leak.Position.Filename {
+					continue
+				}
+
 				relPath, err := filepath.Rel(wd, leak.Position.Filename)
 
 				if err != nil {
