@@ -46,7 +46,7 @@ var rootCmd = cobra.Command{
 
 		var filenamePath string
 
-		if info, _ := os.Stat(path); !info.IsDir() {
+		if info, err := os.Stat(path); err == nil && !info.IsDir() {
 			filenamePath, _ = filepath.Abs(path)
 
 			if !filepath.IsAbs(path) {
