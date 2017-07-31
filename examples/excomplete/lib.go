@@ -1,4 +1,4 @@
-package exstruct
+package excomplete
 
 import (
 	"a"
