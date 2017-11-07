@@ -17,7 +17,8 @@ type LintingError struct{}
 func (LintingError) Error() string { return "linting error" }
 
 var (
-	noFail bool
+	noFail     bool
+	useVCSRoot bool
 )
 
 var rootCmd = cobra.Command{
@@ -64,8 +65,14 @@ var rootCmd = cobra.Command{
 
 		failed := false
 
+		var options []depbleed.Option
+
+		if useVCSRoot {
+			options = append(options, depbleed.UseVCSRootOption(gopath))
+		}
+
 		for _, packagePath := range packagePaths {
-			packageInfo, err := depbleed.GetPackageInfo(packagePath)
+			packageInfo, err := depbleed.GetPackageInfo(packagePath, options...)
 
 			if err != nil {
 				return err
@@ -103,6 +110,7 @@ var rootCmd = cobra.Command{
 
 func init() {
 	rootCmd.Flags().BoolVar(&noFail, "no-fail", false, "Don't fail on errors")
+	rootCmd.Flags().BoolVarP(&useVCSRoot, "use-vcs-root", "g", false, "Use VCS root as package root")
 }
 
 func main() {

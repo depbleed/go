@@ -5,6 +5,7 @@ import (
 	"go/token"
 	"go/types"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -111,11 +112,54 @@ type PackageInfo struct {
 	Package *types.Package
 	Info    types.Info
 	Fset    *token.FileSet
+	VCSRoot string
+}
+
+// Option represents an option for PackageInfo.
+type Option interface {
+	apply(i *PackageInfo) error
+}
+
+type useVCSRootOption struct {
+	gopath string
+}
+
+// UseVCSRootOption returns an option that uses the VCS root as a package root.
+func UseVCSRootOption(gopath string) Option {
+	return useVCSRootOption{gopath: gopath}
+}
+
+func (o useVCSRootOption) apply(i *PackageInfo) error {
+	path := filepath.Join(o.gopath, "src", i.Package.Path())
+	cmd := exec.Command("git", "-C", path, "rev-parse", "--show-toplevel")
+
+	output, err := cmd.Output()
+
+	if err != nil {
+		return fmt.Errorf("cannot determine package VCS root: %s", err)
+	}
+
+	vcsRoot := strings.TrimSpace(string(output))
+
+	// This is necessary because `git rev-parse` will return resolved symlinks.
+	fullGopath, err := filepath.EvalSymlinks(filepath.Join(o.gopath, "src"))
+
+	if err != nil {
+		return fmt.Errorf("cannot determine absolute GOPATH (%s): %s", o.gopath, err)
+	}
+
+	if vcsRoot, err = filepath.Rel(fullGopath, vcsRoot); err != nil {
+		return fmt.Errorf("cannot determine VCS root relative to GOPATH (%s): %s", o.gopath, err)
+	}
+
+	i.VCSRoot = vcsRoot
+
+	return nil
 }
 
 // GetPackageInfo returns information about the package at the specified
 // location.
-func GetPackageInfo(p string) (PackageInfo, error) {
+func GetPackageInfo(p string, options ...Option) (PackageInfo, error) {
 	var config loader.Config
 	config.Import(p)
 	var nestedErr error
@@ -132,11 +176,29 @@ func GetPackageInfo(p string) (PackageInfo, error) {
 
 	packageInfo := program.Package(p)
 
-	return PackageInfo{
+	info := PackageInfo{
 		Package: packageInfo.Pkg,
 		Info:    packageInfo.Info,
 		Fset:    config.Fset,
-	}, nil
+	}
+
+	for _, option := range options {
+		if err := option.apply(&info); err != nil {
+			return PackageInfo{}, err
+		}
+	}
+
+	return info, nil
+}
+
+// GetRoot gets the root of the package.
+func (i PackageInfo) GetRoot() string {
+	switch i.VCSRoot {
+	case "":
+		return i.Package.Path()
+	default:
+		return i.VCSRoot
+	}
 }
 
 // IsMain checks whether the package is a main package.
@@ -248,7 +310,7 @@ func (i PackageInfo) CheckLeaks(t types.Type) error {
 	}
 
 	// Subpackages are ok.
-	if IsSubPackage(pkgPath, i.Package.Path()) {
+	if IsSubPackage(pkgPath, i.GetRoot()) {
 		return nil
 	}
 

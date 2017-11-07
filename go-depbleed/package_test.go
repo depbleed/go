@@ -1,6 +1,7 @@
 package depbleed
 
 import (
+	"errors"
 	"fmt"
 	"go/token"
 	"go/types"
@@ -77,6 +78,15 @@ func TestGetPackagePaths(t *testing.T) {
 	}
 }
 
+func TestUseVCSRootOption(t *testing.T) {
+	// Coverage only.
+	option := UseVCSRootOption("my/go/path")
+
+	if option == nil {
+		t.Fatal("expected not nil")
+	}
+}
+
 func TestGetPackageInfo(t *testing.T) {
 	info, err := GetPackageInfo("github.com/depbleed/go/go-depbleed")
 
@@ -88,6 +98,18 @@ func TestGetPackageInfo(t *testing.T) {
 
 	if info.Package.Name() != expected {
 		t.Errorf("expected \"%s\", got \"%s\"", expected, info.Package.Name())
+	}
+}
+
+type failOption struct{}
+
+func (failOption) apply(*PackageInfo) error { return errors.New("fail") }
+
+func TestGetPackageInfoOptionError(t *testing.T) {
+	_, err := GetPackageInfo("github.com/depbleed/go/go-depbleed", failOption{})
+
+	if err == nil {
+		t.Error("expected an error but didn't get one")
 	}
 }
 
@@ -130,6 +152,34 @@ func TestGetTypeShortName(t *testing.T) {
 
 	if shortName != expected {
 		t.Errorf("expected \"%s\" got \"%s\"", expected, shortName)
+	}
+}
+
+func TestGetRoot(t *testing.T) {
+	info := PackageInfo{
+		Package: &types.Package{},
+		VCSRoot: "",
+	}
+
+	expected := ""
+	value := info.GetRoot()
+
+	if value != expected {
+		t.Errorf("expected\"%s\", got: \"%s\"", expected, value)
+	}
+}
+
+func TestGetRootWithVCS(t *testing.T) {
+	info := PackageInfo{
+		Package: &types.Package{},
+		VCSRoot: "foo/bar",
+	}
+
+	expected := "foo/bar"
+	value := info.GetRoot()
+
+	if value != expected {
+		t.Errorf("expected\"%s\", got: \"%s\"", expected, value)
 	}
 }
 
