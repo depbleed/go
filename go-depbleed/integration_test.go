@@ -51,7 +51,7 @@ func TestExamples(t *testing.T) {
 			packageInfo, err := GetPackageInfo(testCase.PackagePath)
 
 			if err != nil {
-				t.Errorf("expected no error but got: %s", err)
+				t.Fatalf("expected no error but got: %s", err)
 			}
 
 			leaks := packageInfo.Leaks()

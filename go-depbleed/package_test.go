@@ -81,7 +81,7 @@ func TestGetPackageInfo(t *testing.T) {
 	info, err := GetPackageInfo("github.com/depbleed/go/go-depbleed")
 
 	if err != nil {
-		t.Errorf("expected no error but got: %s", err)
+		t.Fatalf("expected no error but got: %s", err)
 	}
 
 	expected := "depbleed"
